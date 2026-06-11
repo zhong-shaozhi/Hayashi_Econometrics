@@ -11,8 +11,6 @@
 .Rproj.user/
 *.Rproj.user
 
-# Output folder — results are reproducible from code
-output/
 
 # Raw data if downloaded as files (we use hayashir package, so less relevant)
 data/raw/

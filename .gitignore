@@ -1,16 +1,13 @@
-# macOS system files — never commit these
+# macOS
 .DS_Store
 .DS_Store?
 ._*
-.Spotlight-V100
-.Trashes
 
-# R generated files — not source code
+# R
 .Rhistory
 .RData
 .Rproj.user/
-*.Rproj.user
 
-
-# Raw data if downloaded as files (we use hayashir package, so less relevant)
-data/raw/
+# Output: keep the folder, ignore the contents
+output/*
+!output/.gitkeep

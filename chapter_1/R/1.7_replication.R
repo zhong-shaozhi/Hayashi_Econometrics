@@ -71,3 +71,26 @@ p_val  <- pf(F_stat, df1 = J, df2 = n - K, lower.tail = FALSE)
 tibble(F_stat, F_crit, p_val) |>
   mutate(across(everything(), \(x) round(x, 4)))
 
+# -- 5. R^2 detour: equation [1.7.4'] -----------------------------------------
+# Substract log(Q) from both sides of [1.7.4] to get average cost as LHS
+ols_ac <- lm(lAC ~ lQ + lPL + lPK + lPF, data = nerlove)
+
+# Compare fit statistics
+bind_rows(
+  glance(ols_u)  %>% mutate(model = "TC model [1.7.4]"),
+  glance(ols_ac) %>% mutate(model = "AC model [1.7.4']")
+) %>% 
+  select(model, r.squared, sigma, df.residual) %>% 
+  mutate(across(where(is.numeric), \(x) round(x, 3)))
+
+# -- 6. t-test: constant returns to scale -------------------------------------
+tidy(ols_r) %>% 
+  filter(term == "lQ") %>% 
+  mutate(
+    # t-ratio for H0: beta2 = 1 (not the default H0: beta2 = 0)
+    t_crs  = (estimate - 1) / std.error,
+    t_crit = qt(0.975, df = n - length(coef(ols_r))),
+    rts    = 1 / estimate
+  ) %>% 
+  select(estimate, std.error, t_crs, t_crit, rts) %>% 
+  mutate(across(everything(), \(x) round(x, 3)))

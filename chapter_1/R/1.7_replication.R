@@ -114,3 +114,53 @@ augment(ols_r) %>%
 # Save to output/
 ggsave("output/fig_1_7_residuals.png", width = 7, height = 5, dpi = 150)
 
+
+# -- 8. Five-group analysis --------------------------------------------------
+
+# Assign groups: sort by output, 5 groups of 29
+nerlove_grouped <- nerlove %>% 
+  arrange(output) %>% 
+  mutate(group = rep(1:5, each = 29))
+
+# Estimate restricted model separately for each group
+# Pattern: nest -> map -> tidy -> unnest
+group_results <- nerlove_grouped %>% 
+  group_by(group) %>% 
+  nest() %>% 
+  mutate(
+    fit    = map(data, \(df)
+                 lm(lTC_PF ~ lQ + lPL_PF + lPK_PF, data = df)),
+    coefs  = map(fit, tidy)
+  ) %>% 
+  unnest(coefs) %>% 
+  filter(term == "lQ") %>% 
+  transmute(
+    group, 
+    beta2  = estimate,
+    se     = std.error,
+    rts    = 1 / estimate,
+    rts_lo = 1 / (estimate + 1.96 * std.error),
+    rts_hi = 1 / (estimate - 1.96 * std.error)
+  )
+
+print(group_results)
+
+group_results |>
+  ggplot(aes(x = group, y = rts)) +
+  geom_point(size = 3.5) +
+  geom_line(linewidth = 0.8) +
+  geom_errorbar(aes(ymin = rts_lo, ymax = rts_hi), width = 0.15) +
+  geom_hline(yintercept = 1, linetype = "dashed", colour = "grey40") +
+  scale_x_continuous(
+    breaks = 1:5,
+    labels = c("Smallest\n(Group 1)", "2", "3", "4", "Largest\n(Group 5)")
+  ) +
+  labs(
+    x     = "Output group (sorted ascending)",
+    y     = "Returns to scale  r = 1/β₂",
+    title = "Nerlove (1963): Scale economies diminish with firm size",
+    subtitle = "Dashed line = constant returns to scale (r = 1)"
+  ) +
+  theme_bw()
+
+ggsave("output/fig_nerlove_rts_by_group.png", width = 7, height = 5, dpi = 150)

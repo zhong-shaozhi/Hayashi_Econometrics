@@ -36,3 +36,38 @@ nerlove <- nerlove |>
     # For R^2 detour [1.7.4']: average cost as dependent variable
     lAC = lTC - lQ
   )
+
+# -- 3. Unrestricted OLS: equation [1.7.4] ------------------------------------
+ols_u <- lm(lTC ~ lQ + lPL + lPK + lPF, data = nerlove)
+
+# Read the results as a clean table
+tidy(ols_u) |>
+  mutate(across(where(is.numeric), \(x) round(x, 3)))
+
+# Check model-level statistics
+glance(ols_u) |> select(r.squared, sigma, nobs)
+
+# Extract SSR manually
+SSR_U <- deviance(ols_u)
+SSR_U
+
+# -- 4. Test the Homogeneity Restriction --------------------------------------
+
+# -- 4a. Restricted OLS: equation [1.7.6] -------------------------------------
+ols_r <- lm(lTC_PF ~ lQ + lPL_PF + lPK_PF, data = nerlove)
+tidy(ols_r) |>
+  mutate(across(where(is.numeric), \(x) round(x, 3)))
+
+SSR_R <- deviance(ols_r)
+
+# -- 4b. F-test of homogeneity ------------------------------------------------
+n <- nrow(nerlove)
+K <- length(coef(ols_u))
+J <- 1
+F_stat <- ((SSR_R - SSR_U) / J) / (SSR_U / (n-K))
+F_crit <- qf(0.95, df1 = J, df2 = n - K)         # 5% critical value
+p_val  <- pf(F_stat, df1 = J, df2 = n - K, lower.tail = FALSE)
+
+tibble(F_stat, F_crit, p_val) |>
+  mutate(across(everything(), \(x) round(x, 4)))
+

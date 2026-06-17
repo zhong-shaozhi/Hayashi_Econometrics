@@ -94,3 +94,23 @@ tidy(ols_r) %>%
   ) %>% 
   select(estimate, std.error, t_crs, t_crit, rts) %>% 
   mutate(across(everything(), \(x) round(x, 3)))
+
+# -- 7. Residual plot: Figure 1.7 ---------------------------------------------
+# augment() appends .fitted and .resid columns to the original data
+augment(ols_r) %>% 
+  ggplot(aes(x = lQ, y = .resid)) +
+  geom_point(size = 1.8, alpha = 0.7) +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey40") +
+  geom_smooth(method = "loess", se = FALSE, colour = "steelblue", 
+              linewidth = 0.8) +
+  labs(
+    x       = "log output",
+    y       = "residual",
+    title   = "Figure 1.7: Residuals vs. Log Output (Restricted Model)",
+    caption = "Smooth line added to reveal pattern; not in Hayashi original"
+  ) +
+  theme_bw()
+
+# Save to output/
+ggsave("output/fig_1_7_residuals.png", width = 7, height = 5, dpi = 150)
+
